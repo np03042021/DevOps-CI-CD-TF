@@ -11,6 +11,7 @@ resource "aws_ecr_repository" "app" {
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = arn:aws:iam::755663465576:role/GitHubActionsEKSDeployRole
+}
 
   access_config {
     authentication_mode = "API"
