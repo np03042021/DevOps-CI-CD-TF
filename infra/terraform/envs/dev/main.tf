@@ -46,7 +46,7 @@ resource "aws_eks_cluster" "this" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.cluster_AmazonEKSClusterPolicy
+    aws_iam_role_policy_attachment.eks_cluster_AmazonEKSClusterPolicy
   ]
 }
 resource "aws_iam_openid_connect_provider" "github" {
