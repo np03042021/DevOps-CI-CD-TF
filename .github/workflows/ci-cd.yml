@@ -1,1 +1,89 @@
 
+name: Terraform + Build + Deploy to EKS
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
+  ECR_REPO: ${{ vars.ECR_REPO }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- OIDC auth to AWS (no long-lived keys) ---
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      # --- Terraform Provision (optional per run; many teams separate this pipeline) ---
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init/Apply
+        working-directory: infra/terraform/envs/dev
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      # --- Build Spring Boot ---
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build JAR
+        working-directory: app
+        run: mvn -q clean package -DskipTests
+
+      # --- Build & push Docker to ECR ---
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        working-directory: app
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          IMAGE_URI=$ACCOUNT_ID.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      # --- kubeconfig requires eks:DescribeCluster permission ---
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+
+      - name: Verify Kubernetes access
+        run: kubectl get ns
+
+      # --- Ansible deploy ---
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Run Ansible add-ons
+        run: ansible-playbook -i ops/ansible/inventories/dev/hosts.yml ops/ansible/playbooks/eks_addons.yml
+
+      - name: Run Ansible deploy app
+        env:
+          IMAGE_URI: ${{ env.IMAGE_URI }}
+        run: ansible-playbook -i ops/ansible/inventories/dev/hosts.yml ops/ansible/playbooks/deploy_app.yml
