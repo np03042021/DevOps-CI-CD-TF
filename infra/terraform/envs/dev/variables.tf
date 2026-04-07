@@ -14,3 +14,8 @@ variable "cluster_name" {
   type        = string
   default     = "demo-eks"
 }
+
+variable "subnet_ids" {
+  description = "List of subnet IDs for the EKS control plane"
+  type        = list(string)
+}
