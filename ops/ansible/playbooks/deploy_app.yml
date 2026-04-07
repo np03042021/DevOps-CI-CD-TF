@@ -1,1 +1,21 @@
+- name: Deploy Spring Boot app
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    image_uri: "{{ lookup('env', 'IMAGE_URI') }}"
+  tasks:
+    - name: Replace image placeholder
+      ansible.builtin.replace:
+        path: "k8s/deployment.yaml"
+        regexp: "REPLACE_IMAGE"
+        replace: "{{ image_uri }}"
 
+    - name: Apply manifests
+      ansible.builtin.command: kubectl apply -f k8s/deployment.yaml
+
+    - name: Apply service
+      ansible.builtin.command: kubectl apply -f k8s/service.yaml
+
+    - name: Wait for rollout
+      ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo
