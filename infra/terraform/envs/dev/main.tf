@@ -49,11 +49,7 @@ resource "aws_eks_cluster" "this" {
     aws_iam_role_policy_attachment.eks_cluster_AmazonEKSClusterPolicy
   ]
 }
-resource "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-}
+
 data "aws_iam_policy_document" "gha_assume_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -61,7 +57,7 @@ data "aws_iam_policy_document" "gha_assume_role" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = ["arn:aws:iam::755663465576:oidc-provider/token.actions.githubusercontent.com"]
     }
 
     condition {
