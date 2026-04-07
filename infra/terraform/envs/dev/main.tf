@@ -10,7 +10,7 @@ resource "aws_ecr_repository" "app" {
 # 2) EKS Cluster (simplified; in production use modules and proper VPC)
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
-  role_arn = aws_iam_role.eks_cluster_role.arn
+  role_arn = arn:aws:iam::755663465576:role/GitHubActionsEKSDeployRole
 
   access_config {
     authentication_mode = "API"
