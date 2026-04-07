@@ -40,7 +40,8 @@ jobs:
       - name: Terraform Init/Apply
         working-directory: infra/terraform/envs/dev
         run: |
-          terraform init
+          rm -rf .terraform
+          terraform init -reconfigure
           terraform apply -auto-approve
 
       # --- Build Spring Boot ---
