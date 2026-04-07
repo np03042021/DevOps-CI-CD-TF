@@ -74,13 +74,14 @@ data "aws_iam_policy_document" "gha_assume_role" {
   }
 }
 
-resource "aws_iam_role" "github_actions" {
-  name               = "GitHubActionsEKSDeployRole"
-  assume_role_policy = data.aws_iam_policy_document.gha_assume_role.json
+
+data "aws_iam_role" "github_actions" {
+  name = "GitHubActionsEKSDeployRole"
 }
+
 resource "aws_iam_role_policy" "gha_eks_describe" {
   name = "gha-eks-describe"
-  role = aws_iam_role.github_actions.id
+  role = data.aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17",
