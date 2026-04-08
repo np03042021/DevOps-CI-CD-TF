@@ -81,7 +81,7 @@
     - name: Rollout check with diagnostics on failure
       block:
         - name: Wait for rollout (with timeout)
-        ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo --timeout=180s
+          ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo --timeout=180s
         
         rescue:
         - name: Get events (last 50)
