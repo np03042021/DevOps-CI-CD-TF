@@ -88,7 +88,7 @@
           ansible.builtin.shell: |
               set -o pipefail
               kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50
-            args:
+          args:
               executable: /bin/bash
             register: ev
             changed_when: false
