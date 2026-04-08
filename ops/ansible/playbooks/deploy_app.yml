@@ -51,5 +51,34 @@
     - name: Apply service
       ansible.builtin.command: kubectl apply -f "{{ service_file }}"
 
+    - name: Show deployment status
+      ansible.builtin.command: kubectl get deploy spring-eks-demo -o wide
+      register: deploy_out
+      changed_when: false
+    
+    - name: Print deployment status
+      ansible.builtin.debug:
+        var: deploy_out.stdout
+    
+    - name: Show pods
+      ansible.builtin.command: kubectl get pods -l app=spring-eks-demo -o wide
+      register: pods_out
+      changed_when: false
+    
+    - name: Print pods
+      ansible.builtin.debug:
+        var: pods_out.stdout
+    
+    - name: Describe deployment (events included)
+      ansible.builtin.command: kubectl describe deploy spring-eks-demo
+      register: desc_out
+      changed_when: false
+    
+    - name: Print describe output
+      ansible.builtin.debug:
+        var: desc_out.stdout
+
+    
     - name: Wait for rollout
-      ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo
+      ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo --timeout=180s
+      
