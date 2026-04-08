@@ -41,7 +41,7 @@
 
     - name: Replace image placeholder
       ansible.builtin.replace:
-        path: "k8s/deployment.yaml"
+        path: "{{ deployment_file }}"
         regexp: "REPLACE_IMAGE"
         replace: "{{ image_uri }}"
 
