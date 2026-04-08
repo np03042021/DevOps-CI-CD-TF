@@ -77,8 +77,34 @@
     - name: Print describe output
       ansible.builtin.debug:
         var: desc_out.stdout
-
-    
-    - name: Wait for rollout
+   
+- block:
+    - name: Wait for rollout (with timeout)
       ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo --timeout=180s
+  rescue:
+    - name: Get events (last 50)
+      ansible.builtin.command: kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50
+      register: ev
+      changed_when: false
+    - ansible.builtin.debug:
+        var: ev.stdout
+
+    - name: Describe pods
+      ansible.builtin.command: kubectl describe pods -l app=spring-eks-demo
+      register: pod_desc
+      changed_when: false
+    - ansible.builtin.debug:
+        var: pod_desc.stdout
+
+    - name: Pod logs (if any)
+      ansible.builtin.command: kubectl logs -l app=spring-eks-demo --tail=200 --all-containers=true
+      register: logs
+      changed_when: false
+    - ansible.builtin.debug:
+        var: logs.stdout
+
+    - name: Fail after diagnostics
+      ansible.builtin.fail:
+        msg: "Rollout failed. See diagnostics above."
+
       
