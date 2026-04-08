@@ -85,11 +85,15 @@
         
       rescue:
         - name: Get events (last 50)
-          ansible.builtin.command: kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50
-          register: ev
-          changed_when: false
-        - ansible.builtin.debug:
-            var: ev.stdout
+          ansible.builtin.shell: |
+              set -o pipefail
+              kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50
+            args:
+              executable: /bin/bash
+            register: ev
+            changed_when: false
+            failed_when: false
+
     
         - name: Describe pods
           ansible.builtin.command: kubectl describe pods -l app=spring-eks-demo
