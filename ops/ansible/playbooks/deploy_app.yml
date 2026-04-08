@@ -83,7 +83,7 @@
         - name: Wait for rollout (with timeout)
           ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo --timeout=180s
         
-        rescue:
+      rescue:
         - name: Get events (last 50)
           ansible.builtin.command: kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50
           register: ev
