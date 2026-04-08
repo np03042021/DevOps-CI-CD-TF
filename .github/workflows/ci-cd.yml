@@ -71,7 +71,12 @@ jobs:
       # --- kubeconfig requires eks:DescribeCluster permission ---
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
-
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+      - name: Show kubeconfig context
+        run: |
+          kubectl config current-context || true
+          kubectl config get-contexts || true
       - name: Verify Kubernetes access
         run: kubectl get ns
 
