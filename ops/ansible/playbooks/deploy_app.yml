@@ -3,8 +3,32 @@
   connection: local
   gather_facts: false
   vars:
+    # GitHub Actions checks out repo here; safest in CI
+    repo_root: "{{ lookup('env', 'GITHUB_WORKSPACE') }}"
     image_uri: "{{ lookup('env', 'IMAGE_URI') }}"
+    deployment_file: "{{ repo_root }}/k8s/deployment.yaml"
+    service_file: "{{ repo_root }}/k8s/service.yaml"
+
   tasks:
+
+  
+- name: Debug resolved paths
+      ansible.builtin.debug:
+        msg:
+          - "repo_root={{ repo_root }}"
+          - "deployment_file={{ deployment_file }}"
+          - "service_file={{ service_file }}"
+
+    - name: Validate manifest files exist
+      ansible.builtin.stat:
+        path: "{{ deployment_file }}"
+      register: deploy_stat
+
+    - name: Fail if deployment manifest is missing
+      ansible.builtin.fail:
+        msg: "Deployment manifest not found at {{ deployment_file }}. Check working directory and checkout."
+      when: not deploy_stat.stat.exists
+
     - name: Replace image placeholder
       ansible.builtin.replace:
         path: "k8s/deployment.yaml"
@@ -12,10 +36,10 @@
         replace: "{{ image_uri }}"
 
     - name: Apply manifests
-      ansible.builtin.command: kubectl apply -f k8s/deployment.yaml
+      ansible.builtin.command: kubectl apply -f "{{ deployment_file }}"
 
     - name: Apply service
-      ansible.builtin.command: kubectl apply -f k8s/service.yaml
+      ansible.builtin.command: kubectl apply -f "{{ service_file }}"
 
     - name: Wait for rollout
       ansible.builtin.command: kubectl rollout status deploy/spring-eks-demo
