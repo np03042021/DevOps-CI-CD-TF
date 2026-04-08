@@ -20,12 +20,24 @@
     - name: Validate manifest files exist
       ansible.builtin.stat:
         path: "{{ deployment_file }}"
-        register: deploy_stat
+      register: deploy_stat
 
     - name: Fail if deployment manifest is missing
       ansible.builtin.fail:
         msg: "Deployment manifest not found at {{ deployment_file }}. Check working directory and checkout."
-        when: not deploy_stat.stat.exists
+      when: not deploy_stat.stat.exists
+
+      
+    - name: Check service manifest exists
+      ansible.builtin.stat:
+        path: "{{ service_file }}"
+      register: svc_stat
+
+    - name: Fail if service manifest is missing
+      ansible.builtin.fail:
+        msg: "Service manifest not found at {{ service_file }}"
+      when: not svc_stat.stat.exists
+
 
     - name: Replace image placeholder
       ansible.builtin.replace:
