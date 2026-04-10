@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "gha_assume_role" {
 
     principals {
       type        = "Federated"
-      identifiers = ["arn:aws:iam::755663465576:oidc-provider/token.actions.githubusercontent.com"]
+      identifiers = ["arn:aws:iam::046056636960:oidc-provider/token.actions.githubusercontent.com"]
     }
 
     condition {
