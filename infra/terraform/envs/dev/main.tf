@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "gha_assume_role" {
 
 
 data "aws_iam_role" "github_actions" {
-  name = "GitHubActionsEKSDeployRole"
+  name = "GitHubActionsDeployRole"
 }
 
 resource "aws_iam_role_policy" "gha_eks_describe" {
