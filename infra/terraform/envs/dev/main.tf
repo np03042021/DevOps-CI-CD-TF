@@ -31,6 +31,87 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_AmazonEKSVPCResourceContr
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
 
+################################
+# VPC
+################################
+resource "aws_vpc" "eks_vpc" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "${var.cluster_name}-vpc"
+  }
+}
+
+################################
+# Internet Gateway
+################################
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  tags = {
+    Name = "${var.cluster_name}-igw"
+  }
+}
+
+################################
+# Route Table
+################################
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "${var.cluster_name}-public-rt"
+  }
+}
+
+################################
+# Subnet 1
+################################
+resource "aws_subnet" "subnet_1" {
+  vpc_id                  = aws_vpc.eks_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.aws_region}a"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.cluster_name}-subnet-1"
+  }
+}
+
+################################
+# Subnet 2
+################################
+resource "aws_subnet" "subnet_2" {
+  vpc_id                  = aws_vpc.eks_vpc.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.cluster_name}-subnet-2"
+  }
+}
+
+################################
+# Route Table Associations
+################################
+resource "aws_route_table_association" "subnet1_assoc" {
+  subnet_id      = aws_subnet.subnet_1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "subnet2_assoc" {
+  subnet_id      = aws_subnet.subnet_2.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
 # 2) EKS Cluster (simplified; in production use modules and proper VPC)
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
@@ -41,8 +122,12 @@ resource "aws_eks_cluster" "this" {
     authentication_mode = "API"
   }
 
-  vpc_config {
-    subnet_ids = var.subnet_ids
+  vpc_config {   
+    subnet_ids = [
+      aws_subnet.subnet_1.id,
+      aws_subnet.subnet_2.id
+  ]
+
   }
 
   depends_on = [
