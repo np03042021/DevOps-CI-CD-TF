@@ -43,15 +43,6 @@ jobs:
           rm -rf .terraform
           terraform init -reconfigure
           terraform apply -auto-approve
-          
-      # --- Install Grafana and Prometheus using Helm ----
-      - name: Update namespace and install grafana and promethus using Helm
-        working-directory: k8s/monitoring
-        run: |
-          kubectl apply -f namespace.yaml
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo update
-          helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring
       
       # --- Build Spring Boot ---
       - name: Set up Java
@@ -102,3 +93,14 @@ jobs:
         env:
           IMAGE_URI: ${{ env.IMAGE_URI }}
         run: ansible-playbook -i ops/ansible/inventories/dev/hosts.yml ops/ansible/playbooks/deploy_app.yml
+
+        # --- Install Grafana and Prometheus using Helm ----
+      - name: Update namespace and install grafana and promethus using Helm
+        working-directory: k8s/monitoring
+        run: |
+          kubectl apply -f namespace.yaml
+          # Install Helm (safe if already installed)
+          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --wait --timeout 10m
