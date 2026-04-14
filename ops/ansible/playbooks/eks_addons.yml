@@ -6,3 +6,81 @@
     - name: Install metrics-server (required for HPA in most setups)
       ansible.builtin.command: >
         kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+- name: Install EKS Add-ons
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
+    aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+    account_id: "{{ lookup('pipe', 'aws sts get-caller-identity --query Account --output text') }}"
+    alb_policy_name: AWSLoadBalancerControllerIAMPolicy
+
+    tasks:
+    
+        ########################################
+        # 1️⃣ Create IAM policy for ALB Controller
+        ########################################
+        - name: Download ALB controller IAM policy
+          get_url:
+            url: https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+            dest: /tmp/alb_iam_policy.json
+    
+        - name: Create IAM policy if not exists
+          shell: |
+            aws iam create-policy \
+              --policy-name {{ alb_policy_name }} \
+              --policy-document file:///tmp/alb_iam_policy.json || true
+          args:
+            executable: /bin/bash
+    
+        ########################################
+        # 2️⃣ Create IAM ServiceAccount (IRSA)
+        ########################################
+        - name: Create IRSA for ALB Controller
+          shell: |
+            eksctl create iamserviceaccount \
+              --cluster {{ cluster_name }} \
+              --namespace kube-system \
+              --name aws-load-balancer-controller \
+              --attach-policy-arn arn:aws:iam::{{ account_id }}:policy/{{ alb_policy_name }} \
+              --approve \
+              --region {{ aws_region }} || true
+          args:
+            executable: /bin/bash
+    
+        ########################################
+        # 3️⃣ Install AWS Load Balancer Controller
+        ########################################
+        - name: Add EKS Helm repo
+          shell: helm repo add eks https://aws.github.io/eks-charts
+          args:
+            executable: /bin/bash
+    
+        - name: Update Helm repos
+          shell: helm repo update
+          args:
+            executable: /bin/bash
+    
+        - name: Install / Upgrade AWS Load Balancer Controller
+          shell: |
+            helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+              -n kube-system \
+              --set clusterName={{ cluster_name }} \
+              --set region={{ aws_region }} \
+              --set serviceAccount.create=false \
+              --set serviceAccount.name=aws-load-balancer-controller \
+              --wait
+          args:
+            executable: /bin/bash
+    
+        ########################################
+        # 4️⃣ Verify controller pods
+        ########################################
+        - name: Verify AWS Load Balancer Controller
+          shell: kubectl get pods -n kube-system | grep aws-load-balancer
+          args:
+            executable: /bin/bash
+
