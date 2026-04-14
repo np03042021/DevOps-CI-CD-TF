@@ -8,7 +8,6 @@
     image_uri: "{{ lookup('env', 'IMAGE_URI') }}"
     deployment_file: "{{ repo_root }}/k8s/deployment.yaml"
     service_file: "{{ repo_root }}/k8s/service.yaml"
-    monitoring_file: "{{ repo_root }}/k8s/monitoring/namespace.yaml"
 
   tasks:
     - name: Debug resolved paths
@@ -51,9 +50,6 @@
 
     - name: Apply service
       ansible.builtin.command: kubectl apply -f "{{ service_file }}"
-
-    - name: Apply monitoring
-      ansible.builtin.command: kubectl apply -f "{{ monitoring_file }}"
 
     - name: Show deployment status
       ansible.builtin.command: kubectl get deploy spring-eks-demo -o wide
