@@ -105,3 +105,9 @@ jobs:
           helm repo update
           helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --wait --timeout 10m
           kubectl apply -f servicemonitor.yaml
+          
+      - name: Verify monitoring stack
+        run: |
+          kubectl get pods -n monitoring
+          kubectl get svc -n monitoring
+
