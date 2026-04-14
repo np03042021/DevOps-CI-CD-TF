@@ -31,6 +31,22 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_AmazonEKSVPCResourceContr
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
 
+resource "aws_eks_access_entry" "gha" {
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = data.aws_iam_role.github_actions.arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "gha_admin" {
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = data.aws_iam_role.github_actions.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
 ################################
 # VPC
 ################################
