@@ -110,4 +110,7 @@ jobs:
         run: |
           kubectl get pods -n monitoring
           kubectl get svc -n monitoring
+      - name: Destory
+        run: |
+          terraform destroy --auto-approve
 
