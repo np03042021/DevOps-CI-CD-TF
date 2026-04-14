@@ -44,7 +44,7 @@ jobs:
           terraform init -reconfigure
           terraform apply -auto-approve
           
-      # --- Install Grafana and Prometheus using Helm ---
+      # --- Install Grafana and Prometheus using Helm ----
       - name: Update namespace and install grafana and promethus using Helm
         working-directory: k8s/monitoring
         run: |
