@@ -43,7 +43,16 @@ jobs:
           rm -rf .terraform
           terraform init -reconfigure
           terraform apply -auto-approve
-
+          
+      # --- Install Grafana and Prometheus using Helm ---
+      - name: Update namespace and install grafana and promethus using Helm
+        working-directory: k8s/monitoring
+        run: |
+          kubectl apply -f k8s/monitoring/namespace.yaml
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring
+      
       # --- Build Spring Boot ---
       - name: Set up Java
         uses: actions/setup-java@v4
