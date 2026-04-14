@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: springboot-app
+      app: spring-eks-demo
   namespaceSelector:
     matchNames:
       - default   # or your app namespace
