@@ -48,7 +48,7 @@ jobs:
       - name: Update namespace and install grafana and promethus using Helm
         working-directory: k8s/monitoring
         run: |
-          kubectl apply -f k8s/monitoring/namespace.yaml
+          kubectl apply -f namespace.yaml
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
           helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring
