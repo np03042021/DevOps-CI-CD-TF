@@ -67,7 +67,7 @@
               --set serviceAccount.create=false \
               --set serviceAccount.name=aws-load-balancer-controller \
               --wait
-          args:
+      args:
             executable: /bin/bash
     
         ########################################
