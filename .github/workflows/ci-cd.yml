@@ -85,6 +85,12 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip install ansible
+      - name: Install eksctl
+        run: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+          | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+          eksctl version
 
       - name: Run Ansible add-ons
         run: ansible-playbook -i ops/ansible/inventories/dev/hosts.yml ops/ansible/playbooks/eks_addons.yml
