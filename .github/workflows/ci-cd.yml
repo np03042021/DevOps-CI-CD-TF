@@ -112,6 +112,11 @@ jobs:
           helm upgrade monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --wait --timeout 10m
           kubectl apply -f servicemonitor.yaml
           
+      - name: Apply Grafana Ingress
+        run: |
+          kubectl apply -f k8s/monitoring/namespace.yaml
+          kubectl apply -f k8s/monitoring/grafana-ingress.yaml
+          
       - name: Verify monitoring stack
         run: |
           kubectl get pods -n monitoring
