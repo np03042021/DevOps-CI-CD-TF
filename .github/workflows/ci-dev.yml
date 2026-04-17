@@ -1,0 +1,46 @@
+name: CI - Dev (Build, Test, Scan)
+
+on:
+  pull_request:
+  push:
+    branches: [ "dev" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # ✅ UNIT TESTS (hard gate)
+      - name: Run unit tests
+        working-directory: app
+        run: mvn test
+
+      # ✅ PACKAGE (after tests pass)
+      - name: Package application
+        working-directory: app
+        run: mvn package -DskipTests
+
+      # ✅ STATIC CODE ANALYSIS (hard gate)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: app
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # ✅ ENFORCE QUALITY GATE
+      - name: Sonar Quality Gate
+        uses: SonarSource/sonarcloud-quality-gate-action@v1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
