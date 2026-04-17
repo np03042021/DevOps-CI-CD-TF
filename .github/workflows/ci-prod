@@ -1,0 +1,45 @@
+name: CD - Prod Blue/Green Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment:
+      name: production   # ✅ manual approval gate
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name prod-eks --region $AWS_REGION
+
+      # ✅ DEPLOY GREEN
+      - name: Deploy green
+        run: kubectl apply -f k8s/prod/app-green.yaml
+
+      # ✅ VERIFY
+      - name: Verify green
+        run: kubectl rollout status deploy/app-green
+
+      # ✅ HEALTH CHECK
+      - name: Smoke test
+        run: |
+          kubectl port-forward svc/demo 8080:80 &
+          sleep 10
+          curl -f http://localhost:8080/actuator/health
+
+      # ✅ PROMOTE (switch traffic)
+      - name: Promote green
+        run: kubectl apply -f k8s/prod/service-green.yaml
