@@ -1,9 +1,8 @@
 terraform {
   backend "s3" {
-    bucket         = "mycompany-terraform-state-dev"
+    bucket         = "my-tf-state-bucket-cicdfinal"
     key            = "eks/dev/terraform.tfstate"
-    region         = "ap-south-1"
-    dynamodb_table = "terraform-locks"
+    region         = "us-east-1"
     encrypt        = true
   }
 }
